@@ -7,6 +7,7 @@ use App\Services\FileUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 
@@ -120,13 +121,22 @@ class InvoiceController extends Controller
     private function generateAndStorePdf(Invoice $invoice): ?string
     {
         try {
+
+            $dir = 'invoices';
+            $path = public_path() . '/' . $dir;
+
+            if (!file_exists($path)) {
+                File::makeDirectory($path, $mode = 0777, true, true);
+            }
+
+            $full_path = $dir . '/' . $invoice->invoice_id . '__' . uniqid() . '.pdf';
+            $path = public_path($full_path);
+
+
             $pdf = Pdf::loadView('invoices.template', ['invoice' => $invoice]);
-            $filename = "invoices/{$invoice->invoice_id}.pdf";
+            $pdf->save($path);
 
-            // Store PDF directly without temporary file
-            Storage::put("public/{$filename}", $pdf->output());
-
-            return Storage::url($filename);
+            return $full_path;
         } catch (\Exception $e) {
             Log::error('PDF generation failed: ' . $e->getMessage());
             return null;
