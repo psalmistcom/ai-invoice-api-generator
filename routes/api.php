@@ -9,3 +9,4 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::post('/invoices', [InvoiceController::class, 'store']);
+Route::get('/invoices/{invoice_id}', [InvoiceController::class, 'show']);

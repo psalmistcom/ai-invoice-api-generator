@@ -19,9 +19,31 @@ class Invoice extends Model
         'pdf_url'
     ];
 
-    protected $casts = [
-        'invoice_items' => 'array',
-        'due_date' => 'date'
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'invoice_items' => 'array',
+            'due_date' => 'datetime'
+        ];
+    }
+    // protected $casts = [
+    //     'invoice_items' => 'array',
+    //     'due_date' => 'date'
+    // ];
+
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var list<string>
+     */
+    protected $hidden = [
+        'updated_at'
     ];
 
     public static function generateInvoiceId()

@@ -24,7 +24,7 @@ class InvoiceController extends Controller
         $validator = Validator::make($request->all(), [
             'business_name' => 'required|string|max:255',
             'business_address' => 'required|string',
-            'business_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'business_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:1024',
             'customer_name' => 'required|string|max:255',
             'invoice_items' => 'required|array|min:1',
             'invoice_items.*.item_name' => 'required|string|max:255',
@@ -133,9 +133,10 @@ class InvoiceController extends Controller
         }
     }
 
-    public function show($id)
+    public function show($invoice_id)
     {
-        $invoice = Invoice::findOrFail($id);
+        $invoice = Invoice::where('invoice_id', $invoice_id)->firstOrFail();
+
         return response()->json([
             'invoice' => $invoice,
             'pdf_url' => $invoice->pdf_url
