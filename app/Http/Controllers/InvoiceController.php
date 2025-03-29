@@ -64,25 +64,7 @@ class InvoiceController extends Controller
             );
         }
 
-        // foreach ($invoiceItems as &$item) {
-        //     $itemTotal = $item['quantity'] * $item['price_per_item'];
-        //     $item['item_total'] = $itemTotal;
-        //     $grandTotal += $itemTotal;
-        // }
 
-        // $businessLogoUrl = null;
-        // if ($request->hasFile('business_logo')) {
-        //     $businessLogoUrl = $this->fileUploadService->uploadImage(
-        //         $request->file('business_logo'),
-        //         'business_logos'
-        //     );
-
-        //     if (!$businessLogoUrl) {
-        //         return response()->json([
-        //             'message' => 'Failed to upload business logo'
-        //         ], 500);
-        //     }
-        // }
 
         // Create invoice
         $invoice = Invoice::create([
