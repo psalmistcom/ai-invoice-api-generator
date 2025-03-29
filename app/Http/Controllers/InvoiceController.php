@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Invoice;
+use App\Services\CloudinaryService;
 use App\Services\FileUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Exception;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
@@ -20,7 +22,7 @@ class InvoiceController extends Controller
         $this->fileUploadService = $fileUploadService;
     }
 
-    public function store(Request $request)
+    public function store(Request $request, CloudinaryService $cloudinaryService)
     {
         $validator = Validator::make($request->all(), [
             'business_name' => 'required|string|max:255',
@@ -97,7 +99,7 @@ class InvoiceController extends Controller
 
 
         // Generate and store PDF
-        $pdfUrl = $this->generateAndStorePdf($invoice);
+        $pdfUrl = $this->generateAndStorePdf($invoice, $cloudinaryService);
 
 
         if (!$pdfUrl) {
@@ -118,25 +120,40 @@ class InvoiceController extends Controller
     }
 
 
-    private function generateAndStorePdf(Invoice $invoice): ?string
+    private function generateAndStorePdf(Invoice $invoice, $cloudinaryService): ?string
     {
         try {
 
-            $dir = 'invoices';
-            $path = public_path() . '/' . $dir;
+            // $dir = 'invoices';
+            // $path = public_path() . '/' . $dir;
 
-            if (!file_exists($path)) {
-                File::makeDirectory($path, $mode = 0777, true, true);
-            }
+            // if (!file_exists($path)) {
+            //     File::makeDirectory($path, $mode = 0777, true, true);
+            // }
 
-            $full_path = $dir . '/' . $invoice->invoice_id . '__' . uniqid() . '.pdf';
-            $path = public_path($full_path);
+            // $full_path = $dir . '/' . $invoice->invoice_id . '__' . uniqid() . '.pdf';
+            // $path = public_path($full_path);
 
 
             $pdf = Pdf::loadView('invoices.template', ['invoice' => $invoice]);
-            $pdf->save($path);
+            // Save the PDF to a temporary file
+            $tempFilePath = tempnam(sys_get_temp_dir(), 'invoices') . '.pdf';
+            $pdf->save($tempFilePath);
+            // upload to cloudinary
+            try {
+                $uploadResponse = $cloudinaryService->uploadFile($tempFilePath, 'b2b-invoices', 'raw');
+                // Get the Cloudinary URL
+                $pdfUrl = $uploadResponse['secure_url'];
+                // Delete the temporary file
+                unlink($tempFilePath);
+            } catch (Exception $e) {
+                return response()->json([
+                    'message' => 'Failed to upload PDF to Cloudinary.',
+                    'error' => $e->getMessage(),
+                ], 500);
+            }
 
-            return $full_path;
+            return $pdfUrl;
         } catch (\Exception $e) {
             Log::error('PDF generation failed: ' . $e->getMessage());
             return null;
